@@ -44,6 +44,8 @@ module HykuAddons
           fcrepo_endpoint.switch!
           redis_endpoint.switch!
           datacite_endpoint.switch!
+          Rails.application.routes.default_url_options[:host] = cname
+          Hyrax::Engine.routes.default_url_options[:host] = cname
         end
 
         def reset!
@@ -51,6 +53,8 @@ module HykuAddons
           FcrepoEndpoint.reset!
           RedisEndpoint.reset!
           DataCiteEndpoint.reset!
+          Rails.application.routes.default_url_options[:host] = nil
+          Hyrax::Engine.routes.default_url_options[:host] = nil
         end
       end
 
@@ -333,6 +337,29 @@ module HykuAddons
       # end
     end
 
+    initializer 'hyku_addons.import_mode_overrides' do
+      Hyrax::Actors::FileSetActor.class_eval do
+        def attach_to_work(work, file_set_params = {})
+          acquire_lock_for(work.id) do
+            # Ensure we have an up-to-date copy of the members association, so that we append to the end of the list.
+            work.reload unless work.new_record?
+            unless assign_visibility?(file_set_params)
+              # Work around lack of functionality in bulkrax by bringing all file sets in as private
+              # then change visibility post-import
+              file_set.visibility = Flipflop.enabled?(:import_mode) ? 'restricted' : work.visibility
+            end
+            work.ordered_members << file_set
+            work.representative = file_set if work.representative_id.blank?
+            work.thumbnail = file_set if work.thumbnail_id.blank?
+            # Save the work so the association between the work and the file_set is persisted (head_id)
+            # NOTE: the work may not be valid, in which case this save doesn't do anything.
+            work.save
+            Hyrax.config.callback.run(:after_create_fileset, file_set, user)
+          end
+        end
+      end
+    end
+
     initializer 'hyku_addons.hyrax_identifier_overrides' do
       Hyrax::Identifier::Dispatcher.class_eval do
         def assign_for(object:, attribute: :identifier)
@@ -403,6 +430,7 @@ module HykuAddons
         config.register_curation_concern :pacific_presentation
         config.register_curation_concern :pacific_text_work
         config.register_curation_concern :pacific_uncategorized
+        config.register_curation_concern :uva_work
 
         config.license_service_class = HykuAddons::LicenseService
 
