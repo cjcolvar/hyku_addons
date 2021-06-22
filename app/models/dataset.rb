@@ -6,7 +6,6 @@ class Dataset < ActiveFedora::Base
   include Hyrax::DOI::DataCiteDOIBehavior
   include ::HykuAddons::WorkBase
   include ::HykuAddons::AltTitleMultiple
-  include ::HykuAddons::AddInfoSingular
 
   property :version, predicate: ::RDF::Vocab::SCHEMA.version do |index|
     index.as :stored_searchable

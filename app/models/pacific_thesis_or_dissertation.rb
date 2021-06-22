@@ -9,7 +9,6 @@ class PacificThesisOrDissertation < ActiveFedora::Base
   include Hyrax::DOI::DataCiteDOIBehavior
   include ::HykuAddons::WorkBase
   include ::HykuAddons::AltTitleMultiple
-  include ::HykuAddons::AddInfoSingular
 
   property :pagination, predicate: ::RDF::Vocab::BIBO.numPages, multiple: false do |index|
     index.as :stored_searchable

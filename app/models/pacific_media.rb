@@ -9,8 +9,6 @@ class PacificMedia < ActiveFedora::Base
   include Hyrax::DOI::DataCiteDOIBehavior
   include ::HykuAddons::WorkBase
   include ::HykuAddons::AltTitleMultiple
-  include ::HykuAddons::AddInfoSingular
-
   property :additional_links, predicate: ::RDF::Vocab::SCHEMA.significantLinks, multiple: false do |index|
     index.as :stored_searchable
   end

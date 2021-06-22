@@ -6,7 +6,9 @@ class Report < ActiveFedora::Base
   include Hyrax::DOI::DataCiteDOIBehavior
   include ::HykuAddons::WorkBase
   include ::HykuAddons::AltTitleMultiple
-  include ::HykuAddons::AddInfoSingular
+
+  self.indexer = ReportIndexer
+  validates :title, presence: { message: 'Your work must have a title.' }
 
   property :pagination, predicate: ::RDF::Vocab::BIBO.numPages, multiple: false do |index|
     index.as :stored_searchable
@@ -49,9 +51,6 @@ class Report < ActiveFedora::Base
   end
 
   self.json_fields += %i[editor]
-
-  self.indexer = ReportIndexer
-  validates :title, presence: { message: 'Your work must have a title.' }
 
   # This must be included at the end, because it finalizes the metadata
   # schema (by adding accepts_nested_attributes)
