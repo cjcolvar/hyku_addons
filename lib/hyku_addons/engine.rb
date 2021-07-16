@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'hyrax/doi/engine'
 require 'bolognese/metadata'
 
@@ -510,7 +511,8 @@ module HykuAddons
       ::Bolognese::Metadata.prepend ::Bolognese::Writers::HyraxWorkWriterBehavior
       ::Bolognese::Metadata.include HykuAddons::Bolognese::JsonFieldsReader
 
-      ::ApplicationController.include HykuAddons::MultitenantLocaleControllerBehavior
+      ::ApplicationController.include ::HykuAddons::MultitenantLocaleControllerBehavior
+
       ::Hyku::API::V1::FilesController.include HykuAddons::FilesControllerBehavior
       ::Hyku::API::V1::HighlightsController.class_eval do
         def index
@@ -526,6 +528,14 @@ module HykuAddons
       end
       Bulkrax::ImportersController.include HykuAddons::ImporterControllerBehavior
       ::ActiveJob::Base.include HykuAddons::ImportMode
+      Hyrax::Dashboard::ProfilesController.prepend HykuAddons::Dashboard::ProfilesControllerBehavior
+
+      User.include Hyrax::Orcid::UserBehavior
+      Bolognese::Metadata.prepend Bolognese::Writers::OrcidXmlWriter
+      Hyrax::CurationConcern.actor_factory.use Hyrax::Actors::Orcid::PublishWorkActor
+      # Because the Hyrax::ModelActor does not call next_actor and continue the chain, we require a new actor
+      actors = [Hyrax::Actors::ModelActor, Hyrax::Actors::Orcid::UnpublishWorkActor]
+      Hyrax::CurationConcern.actor_factory.insert_before(*actors)
     end
 
     # Use #to_prepare because it reloads where after_initialize only runs once

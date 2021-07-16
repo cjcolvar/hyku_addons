@@ -20,6 +20,10 @@ Flipflop.configure do
           default: false,
           description: "Import mode - Background jobs are run on specially named queues"
 
+  feature :orcid_identities,
+          default: false,
+          description: "Allow users to link their profile to ORCID"
+
   # If this is turned on by default inside the specs, it'll break a lot of them with the on-create callbacks
   feature :task_master,
           default: ENV["PUBSUB_SERVICEACCOUNT_KEY"].present? && !Rails.env.test?,

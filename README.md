@@ -88,7 +88,6 @@ psql --host db --port 5432 --user postgres --dbname hyku
 
 Then enter the password from the `docker-compose.yml` POSTGRES_PASSWORD.
 
-
 ### Initializers
 Initializers that should be run within Hyku can be added to `config/initializers` like in a Rails application.  They can also be added as `initializer` blocks within the `Engine` class, but that should be reserved for code needed to configure the engine infrastructure instead of setup, configuration, and override code that would normally go in `config/initializers` in a Hyku application.  There are additional hooks for different stages of the initialization process available within the `Engine` as described by https://edgeguides.rubyonrails.org/engines.html#available-configuration-hooks.
 
@@ -135,25 +134,25 @@ CFLAGS=-Wno-error=format-overflow  gem install zookeeper -v '1.4.11' --source 'h
 
 Dory can be used to automatically configure your local development environment so that you can use local subdomains, however you may experience issues. (See https://github.com/samvera/hyku/#dory)
 
-Another solution is to simply edit your `/etc/hosts` file and add in each tenants cname here. For example: 
+Another solution is to simply edit your `/etc/hosts` file and add in each tenants cname here. For example:
 
 ```
 sudo vim /etc/hosts
 ```
-And add the following: 
+And add the following:
 
 ```
 # ... Existing content
 
 # Hyku
-127.0.0.1       hyku.docker          # The main account section 
+127.0.0.1       hyku.docker          # The main account section
 127.0.0.1       repo.hyku.docker
 127.0.0.1       pacific.hyku.docker
 ```
 
 You can now access the repositories by suffixing the URL with `:3000`, for instance: http://hyku.docker:3000
 
-You will need to add each new tenant cname to your host file when a new account is added.  
+You will need to add each new tenant cname to your host file when a new account is added.
 
 ### Docker
 

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "bolognese"
 
 # NOTE:
@@ -17,7 +18,7 @@ module Bolognese
 
       # Some attributes are not copied over from data inside of hyku, but calculated in reader methods below.
       def self.special_terms
-        %w[types publication_year]
+        %w[types publication_year uuid]
       end
 
       # Some attributes wont match those that are expected by bolognese. This is
@@ -68,8 +69,15 @@ module Bolognese
 
       protected
 
+        def read_uuid
+          meta["id"]
+        end
+
         def read_creator
-          return unless (value = @meta.fetch("creator", @meta.dig("creator_display"))).present?
+          # Depending on where in the parse process we are, `creators` might be set, or we might have to fall back.
+          # This is because Bolognese expects `creators` but HA uses `creator` for its fields, and the HA fields
+          # are not translated until the after actions are performed.
+          return unless (value = creators.presence || @meta["creator"] || @meta["creator_display"]).present?
 
           value = bologneseify_author_json(:creator, value.first)
 
@@ -77,7 +85,7 @@ module Bolognese
         end
 
         def read_contributor
-          return unless (value = @meta.fetch("contributor", @meta.dig("contributor_display"))).present?
+          return unless (value = contributors.presence || @meta["contributor"] || @meta["contributor_display"]).present?
 
           value = bologneseify_author_json(:contributor, value.first)
 
@@ -202,6 +210,23 @@ module Bolognese
           read_method_name = "read_#{term}".to_sym
 
           respond_to?(read_method_name, true) ? send(read_method_name) : meta_value(term)
+        end
+
+        # Prepare the json to be parsed through Bolognese get_authors method
+        # Bologese wants a hash with `givenName` not `creator_given_name` etc
+        def bologneseify_author_json(type, json)
+          obj = JSON.parse(json)
+          transformed = Array.wrap(obj).map { |cr| cr.transform_keys { |k| k.gsub(/#{type}_/, "") }.deep_transform_keys { |k| k.camelize(:lower) } }
+
+          transformed.each do |t|
+            t["nameIdentifier"] = { "nameIdentifierScheme" => "orcid", "__content__" => t["orcid"] } if t["orcid"].present?
+            t["contributorType"] = t.delete("type") if t["type"].present?
+          end
+
+          transformed.compact
+
+        rescue JSON::ParserError
+          json
         end
 
         # Process any special nested attributes, like the `container` param
